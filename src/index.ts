@@ -63,12 +63,32 @@ const player = new Player(ctx, x, y, 30, 'yellow')
 let projectiles: Projectile[] = []
 let enemies: Enemy[] = []
 
+let animationId: number;
 function animate() {
-  requestAnimationFrame(animate)
+  animationId = requestAnimationFrame(animate)
   ctx.clearRect(0, 0, canvas.width, canvas.height)
   player.draw()
   projectiles.forEach(pr => pr.update())
-  enemies.forEach(en => en.update())
+
+  enemies.forEach((en, i) => {
+    en.update()
+
+    const distToPlayer = Math.hypot(player.x - en.x, player.y - en.y)
+
+    if (distToPlayer - en.radius - player.radius < 1) {
+      cancelAnimationFrame(animationId)
+    }
+
+    projectiles.forEach((pr, j) => {
+      const distToEnemy = Math.hypot(pr.x - en.x, pr.y - en.y)
+      if (distToEnemy - pr.radius - en.radius < 1) {
+        setTimeout(() => {
+          enemies.splice(i, 1)
+          projectiles.splice(j, 1)
+        }, 0);
+      }
+    })
+  })
 }
 
 addEventListener('click', (evt: MouseEvent) => {
