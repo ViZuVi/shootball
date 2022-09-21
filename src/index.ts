@@ -1,4 +1,6 @@
+import { gsap } from "gsap"
 import Ball from "./models/Ball"
+import MovingBall from "./models/MovingBall"
 
 const canvas = <HTMLCanvasElement>document.getElementById('canvas')
 
@@ -12,29 +14,47 @@ class Player extends Ball {
     super(ctx, x, y, raduis, color);
   }
 }
-class Projectile extends Ball {
-  constructor(ctx: CanvasRenderingContext2D, x: number, y: number, raduis: number, color: string, protected velocity: { x: number, y: number }) {
-    super(ctx, x, y, raduis, color);
-  }
-  update() {
-    this.draw()
-    this.x = this.x + this.velocity.x
-    this.y = this.y + this.velocity.y
+
+class Projectile extends MovingBall {
+  constructor(ctx: CanvasRenderingContext2D, x: number, y: number, raduis: number, color: string, velocity: { x: number, y: number }) {
+    super(ctx, x, y, raduis, color, velocity);
   }
 }
 
-class Enemy extends Ball {
-  constructor(ctx: CanvasRenderingContext2D, x: number, y: number, raduis: number, color: string, protected velocity: { x: number, y: number }) {
-    super(ctx, x, y, raduis, color);
-  }
-  update() {
-    this.draw()
-    this.x = this.x + this.velocity.x
-    this.y = this.y + this.velocity.y
+class Enemy extends MovingBall {
+  constructor(ctx: CanvasRenderingContext2D, x: number, y: number, raduis: number, color: string, velocity: { x: number, y: number }) {
+    super(ctx, x, y, raduis, color, velocity);
   }
 }
 
-function spanEnemies() {
+class Particle extends MovingBall {
+  public alpha = 1
+  private friction = 0.99
+  constructor(ctx: CanvasRenderingContext2D, x: number, y: number, raduis: number, color: string, velocity: { x: number, y: number }) {
+    super(ctx, x, y, raduis, color, velocity);
+  }
+
+  draw() {
+    ctx.save()
+    this.ctx.beginPath()
+    ctx.globalAlpha = this.alpha
+    this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false)
+    this.ctx.fillStyle = this.color
+    this.ctx.fill()
+    ctx.restore()
+  }
+
+  update() {
+    this.draw()
+    this.velocity.x *= this.friction
+    this.velocity.y *= this.friction
+    this.x = this.x + this.velocity.x
+    this.y = this.y + this.velocity.y
+    this.alpha -= 0.01
+  }
+}
+
+function spawnEnemies() {
   setInterval(() => {
     const radius = Math.random() * (30 - 4) + 4
     let x: number
@@ -46,7 +66,7 @@ function spanEnemies() {
       x = Math.random() * canvas.width
       y = Math.random() > 0.5 ? 0 - radius : canvas.height + radius
     }
-    const color =  `hsl(${Math.random() * 360}, 50%, 50%)`
+    const color = `hsl(${Math.random() * 360}, 50%, 50%)`
     const angle = Math.atan2(canvas.height / 2 - y, canvas.width / 2 - x)
     const velocity = {
       x: Math.cos(angle),
@@ -62,6 +82,7 @@ const y = canvas.height / 2
 const player = new Player(ctx, x, y, 20, 'white')
 let projectiles: Projectile[] = []
 let enemies: Enemy[] = []
+let particles: Particle[] = []
 
 let animationId: number;
 function animate() {
@@ -69,6 +90,13 @@ function animate() {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   player.draw()
+  particles.forEach((part, i) => {
+    if (part.alpha <= 0) {
+      particles.splice(i, 1)
+    } else {
+      part.update()
+    }
+  })
   projectiles.forEach((pr, i) => {
     pr.update()
 
@@ -94,11 +122,26 @@ function animate() {
 
     projectiles.forEach((pr, j) => {
       const distToEnemy = Math.hypot(pr.x - en.x, pr.y - en.y)
+      // projectiles touch enemy
       if (distToEnemy - pr.radius - en.radius < 1) {
-        setTimeout(() => {
-          enemies.splice(i, 1)
-          projectiles.splice(j, 1)
-        }, 0);
+        // enemy explosions
+        for (let i = 0; i < en.radius * 2; i++) {
+          particles.push(new Particle(ctx, pr.x, pr.y, Math.random() * 2, en.color, { x: (Math.random() - 0.5 * (Math.random() * 6)), y: (Math.random() - 0.5) * (Math.random() * 6) }))
+        }
+
+        if (en.radius - 10 > 5) {
+          gsap.to(en, {
+            radius: en.radius - 10
+          })
+          setTimeout(() => {
+            projectiles.splice(j, 1)
+          }, 0);
+        } else {
+          setTimeout(() => {
+            enemies.splice(i, 1)
+            projectiles.splice(j, 1)
+          }, 0);
+        }
       }
     })
   })
@@ -114,4 +157,4 @@ addEventListener('click', (evt: MouseEvent) => {
 })
 
 animate()
-spanEnemies()
+spawnEnemies()
