@@ -1,8 +1,11 @@
-import { gsap } from "gsap"
-import Ball from "./models/Ball"
+import { gsap } from 'gsap'
+import Ball from './models/Ball'
 import MovingBall from "./models/MovingBall"
+import './styles/main.css'
+// TODO: stylelint & eslint
 
 const canvas = <HTMLCanvasElement>document.getElementById('canvas')
+const scoreEl = <HTMLSpanElement>document.getElementById('score')
 
 canvas.width = innerWidth
 canvas.height = innerHeight
@@ -54,9 +57,12 @@ class Particle extends MovingBall {
   }
 }
 
+const MAX_ENEMY_RADUIS = 30
+const MIN_ENEMY_RADUIS = 30
+
 function spawnEnemies() {
   setInterval(() => {
-    const radius = Math.random() * (30 - 4) + 4
+    const radius = Math.random() * (MAX_ENEMY_RADUIS - MIN_ENEMY_RADUIS) + MIN_ENEMY_RADUIS
     let x: number
     let y: number
     if (Math.random() < 0.5) {
@@ -85,6 +91,8 @@ let enemies: Enemy[] = []
 let particles: Particle[] = []
 
 let animationId: number;
+let score = 0;
+
 function animate() {
   animationId = requestAnimationFrame(animate)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
@@ -130,6 +138,8 @@ function animate() {
         }
 
         if (en.radius - 10 > 5) {
+        score += 50 + MAX_ENEMY_RADUIS - Math.round(en.radius)
+
           gsap.to(en, {
             radius: en.radius - 10
           })
@@ -137,11 +147,14 @@ function animate() {
             projectiles.splice(j, 1)
           }, 0);
         } else {
+          score += 100 + MAX_ENEMY_RADUIS - Math.round(en.radius)
           setTimeout(() => {
             enemies.splice(i, 1)
             projectiles.splice(j, 1)
           }, 0);
         }
+
+        scoreEl.textContent = score.toString()
       }
     })
   })
