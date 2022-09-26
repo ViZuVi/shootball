@@ -10,6 +10,8 @@ html {
 
 body {
   margin: 0;
+  color: white;
+  background-color: black;
 }
 
 canvas {
@@ -19,8 +21,44 @@ canvas {
 
 .score {
   position: fixed;
-  color: white;
   font-size: 1.3rem;
   line-height: 1.2;
   padding: 0.5rem;
+}
+
+.game-result {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  line-height: 1.2;
+}
+
+.game-result__inner {
+  background-color: white;
+  color: black;
+  width: 50%;
+  padding: 24px;
+  text-align: center;
+}
+
+.game-result__btn {
+  border: 0;
+  background-color: #9575e0;
+  border-radius: 4px;
+  padding: 1rem;
+  width: 100%;
+  color: white;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.game-result__btn:hover {
+  opacity: 0.7;
+}
+
+.game-result__btn:active {
+  opacity: 0.9;
 }

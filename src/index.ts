@@ -7,6 +7,10 @@ import './styles/main.css'
 const canvas = <HTMLCanvasElement>document.getElementById('canvas')
 const scoreEl = <HTMLSpanElement>document.getElementById('score')
 
+const startGameBtn = <HTMLButtonElement>document.querySelector('.game-result__btn')
+const gameResultEl = <HTMLDivElement>document.querySelector('.game-result')
+const gameResultScore = <HTMLElement>document.querySelector('.game-result__score')
+
 canvas.width = innerWidth
 canvas.height = innerHeight
 
@@ -60,6 +64,28 @@ class Particle extends MovingBall {
 const MAX_ENEMY_RADUIS = 30
 const MIN_ENEMY_RADUIS = 30
 
+const x = canvas.width / 2
+const y = canvas.height / 2
+
+let player = new Player(ctx, x, y, 20, 'white')
+let projectiles: Projectile[] = []
+let enemies: Enemy[] = []
+let particles: Particle[] = []
+
+let animationId: number;
+let score = 0;
+
+function initGame() {
+  player = new Player(ctx, x, y, 20, 'white')
+  projectiles  = []
+  enemies = []
+  particles = []
+  
+  animationId = 0;
+  score = 0;
+  scoreEl.textContent = score.toString()
+}
+
 function spawnEnemies() {
   setInterval(() => {
     const radius = Math.random() * (MAX_ENEMY_RADUIS - MIN_ENEMY_RADUIS) + MIN_ENEMY_RADUIS
@@ -82,22 +108,12 @@ function spawnEnemies() {
   }, 1000)
 }
 
-const x = canvas.width / 2
-const y = canvas.height / 2
-
-const player = new Player(ctx, x, y, 20, 'white')
-let projectiles: Projectile[] = []
-let enemies: Enemy[] = []
-let particles: Particle[] = []
-
-let animationId: number;
-let score = 0;
-
 function animate() {
   animationId = requestAnimationFrame(animate)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.1)'
   ctx.fillRect(0, 0, canvas.width, canvas.height)
   player.draw()
+
   particles.forEach((part, i) => {
     if (part.alpha <= 0) {
       particles.splice(i, 1)
@@ -105,6 +121,7 @@ function animate() {
       part.update()
     }
   })
+  
   projectiles.forEach((pr, i) => {
     pr.update()
 
@@ -126,6 +143,9 @@ function animate() {
 
     if (distToPlayer - en.radius - player.radius < 1) {
       cancelAnimationFrame(animationId)
+      gameResultEl.style.display = 'flex'
+      startGameBtn.innerText = 'Restart'
+      gameResultScore.textContent = score.toString()
     }
 
     projectiles.forEach((pr, j) => {
@@ -169,5 +189,11 @@ addEventListener('click', (evt: MouseEvent) => {
   projectiles.push(new Projectile(ctx, x, y, 5, 'white', velocity))
 })
 
-animate()
-spawnEnemies()
+
+startGameBtn.addEventListener('click', (e: Event) => {
+  e.stopPropagation()
+  initGame()
+  gameResultEl.style.display = 'none'
+  animate()
+  spawnEnemies()
+})
